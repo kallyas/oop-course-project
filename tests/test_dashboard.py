@@ -7,6 +7,8 @@ from pathlib import Path
 import pytest
 from streamlit.testing.v1 import AppTest
 
+from hybrid_power.presentation.dashboard import KpiDelta
+
 APP = str(Path(__file__).resolve().parents[1] / "streamlit_app.py")
 
 
@@ -24,6 +26,11 @@ def test_dashboard_renders_without_errors(app: AppTest) -> None:
     assert "Operating cost" in labels
     assert "Diesel used" in labels
     assert any("Recommended strategy" in info.value for info in app.info)
+    # Equal reliability is reported as a neutral "no change", not a red "+0.0".
+    unmet = next(metric for metric in app.metric if metric.label == "Unmet demand")
+    assert unmet.delta == "no change"
+    cost = next(metric for metric in app.metric if metric.label == "Operating cost")
+    assert cost.delta.startswith("-")
 
 
 def test_changing_inputs_reruns_simulation(app: AppTest) -> None:
@@ -58,3 +65,20 @@ def test_fleet_study_runs_from_form(app: AppTest) -> None:
     assert sites.value == "5"
     alerts = [*app.success, *app.warning, *app.error]
     assert any("Direction is" in alert.value for alert in alerts)
+
+
+@pytest.mark.parametrize(
+    ("change", "decimals", "lower_is_better", "expected"),
+    [
+        (0.0, 1, True, KpiDelta("no change", "off", "off")),
+        (0.04, 1, True, KpiDelta("no change", "off", "off")),
+        (-0.4, 0, True, KpiDelta("no change", "off", "off")),
+        (-310.2, 0, True, KpiDelta("-310 USD", "inverse", "auto")),
+        (2.5, 1, True, KpiDelta("+2.5 USD", "inverse", "auto")),
+        (47.0, 0, False, KpiDelta("+47 USD", "normal", "auto")),
+    ],
+)
+def test_kpi_delta_formatting(
+    change: float, decimals: int, lower_is_better: bool, expected: KpiDelta
+) -> None:
+    assert KpiDelta.of(change, "USD", decimals, lower_is_better=lower_is_better) == expected

@@ -13,6 +13,17 @@ from hybrid_power.fleet.simulator import FleetResult
 from hybrid_power.fleet.statistics import SummaryStatistics
 
 
+def describe_fleets(sizes: Sequence[int]) -> str:
+    """Name fleet sizes in plain English, e.g. "fleets of 1, 5 and 10 sites"."""
+    if not sizes:
+        raise ConfigurationError("sizes must not be empty")
+    if len(sizes) == 1:
+        size = sizes[0]
+        return f"a fleet of {size} site{'' if size == 1 else 's'}"
+    listed = ", ".join(str(size) for size in sizes[:-1])
+    return f"fleets of {listed} and {sizes[-1]} sites"
+
+
 @dataclass(frozen=True)
 class FleetSizeSummary:
     """Statistics of one candidate strategy for one fleet size."""
@@ -99,11 +110,11 @@ class ConsistencyReport:
         if self.magnitude_consistent:
             lines.append("Magnitude is consistent: every fleet mean lies inside that interval.")
         else:
-            outliers = [str(s.size) for s in self.summaries if not self.agrees_with_reference(s)]
+            outliers = [s.size for s in self.summaries if not self.agrees_with_reference(s)]
             reliable = self.smallest_reliable_size
             tail = f" Estimates are stable from {reliable} sites upward." if reliable else ""
             lines.append(
-                f"Magnitude differs for fleets of {', '.join(outliers)} site(s): small samples "
+                f"Magnitude differs for {describe_fleets(outliers)}: small samples "
                 f"misstate the size of the saving.{tail}"
             )
         return " ".join(lines)

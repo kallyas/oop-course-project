@@ -23,7 +23,7 @@ dependencies = [
     "numpy>=1.26",
     "pandas>=2.1",
     "plotly>=5.18",
-    "streamlit>=1.46",
+    "streamlit>=1.52",
     "typing-extensions>=4.5",
 ]
 

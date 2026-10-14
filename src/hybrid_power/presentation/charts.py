@@ -93,8 +93,9 @@ class ChartFactory:
             template=self._template,
             height=height,
             hovermode="x unified",
-            legend={"orientation": "h", "yanchor": "bottom", "y": 1.02, "x": 0},
-            margin={"l": 40, "r": 20, "t": 80, "b": 40},
+            # Below the plot, so a legend that wraps never covers the title.
+            legend={"orientation": "h", "yanchor": "top", "y": -0.18, "x": 0},
+            margin={"l": 40, "r": 20, "t": 60, "b": 100},
         )
         return figure
 

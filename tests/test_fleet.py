@@ -16,6 +16,7 @@ from hybrid_power.fleet import (
     SummaryStatistics,
     run_fleet_study,
 )
+from hybrid_power.fleet.consistency import describe_fleets
 
 TEMPLATE = ScenarioConfig(profile=ProfileConfig(days=2))
 
@@ -228,7 +229,7 @@ class TestConsistencyStudy:
         assert report.direction_consistent
         assert not report.magnitude_consistent
         assert report.smallest_reliable_size == 10
-        assert "Magnitude differs for fleets of 1" in report.verdict()
+        assert "Magnitude differs for a fleet of 1 site:" in report.verdict()
 
     def test_direction_inconsistency_is_reported(self) -> None:
         outcomes = [site("a", 100, 150)] + [site(f"s{i}", 100, 50) for i in range(9)]
@@ -253,6 +254,22 @@ class TestConsistencyStudy:
             ConsistencyStudy([1, 50]).analyse(FleetResult([site("a", 1, 1)]))
         with pytest.raises(ConfigurationError):
             ConsistencyReport("optimizer", "baseline", ())
+
+    @pytest.mark.parametrize(
+        ("sizes", "text"),
+        [
+            ([1], "a fleet of 1 site"),
+            ([5], "a fleet of 5 sites"),
+            ([1, 5], "fleets of 1 and 5 sites"),
+            ([1, 5, 10], "fleets of 1, 5 and 10 sites"),
+        ],
+    )
+    def test_fleet_sizes_are_described_in_plain_english(self, sizes: list[int], text: str) -> None:
+        assert describe_fleets(sizes) == text
+
+    def test_describe_fleets_rejects_empty(self) -> None:
+        with pytest.raises(ConfigurationError):
+            describe_fleets([])
 
     def test_single_site_reference_verdict(self) -> None:
         report = ConsistencyStudy([1]).analyse(FleetResult([site("a", 100, 50)]))

@@ -10,6 +10,7 @@ from __future__ import annotations
 import hashlib
 import io
 from dataclasses import dataclass, replace
+from typing import Literal
 
 import pandas as pd
 import streamlit as st
@@ -58,6 +59,29 @@ def _simulate_fleet(template_json: str, fleet_json: str) -> FleetStudyOutcome:
     """Run a fleet consistency study (cached on the serialised inputs)."""
     template = ScenarioConfig.from_json(template_json)
     return run_fleet_study(template, FleetConfig.from_json(fleet_json))
+
+
+@dataclass(frozen=True)
+class KpiDelta:
+    """A KPI's change against the baseline, formatted for ``st.metric``.
+
+    Changes that round to zero at the displayed precision are shown as a
+    neutral "no change" without an arrow, instead of a coloured "+0.0".
+    """
+
+    text: str
+    color: Literal["normal", "inverse", "off"]
+    arrow: Literal["auto", "off"]
+
+    @classmethod
+    def of(
+        cls, change: float, unit: str, decimals: int = 0, *, lower_is_better: bool = True
+    ) -> KpiDelta:
+        """Format ``change`` (candidate minus baseline) in ``unit``."""
+        if round(change, decimals) == 0:
+            return cls("no change", "off", "off")
+        colour: Literal["normal", "inverse"] = "inverse" if lower_is_better else "normal"
+        return cls(f"{change:+,.{decimals}f} {unit}", colour, "auto")
 
 
 @dataclass(frozen=True)
@@ -346,42 +370,50 @@ class ResultsView:
         c, b = comparison.candidate, comparison.baseline
         currency = self._outcome.config.currency
         st.subheader(f"`{self._candidate}` vs `{self._report.baseline_name}`")
-        cols = st.columns(6)
-        cols[0].metric(
-            "Operating cost",
-            f"{c.total_cost:,.0f} {currency}",
-            f"{-comparison.cost_savings:,.0f} {currency}",
-            delta_color="inverse",
+        kpis = (
+            (
+                "Operating cost",
+                f"{c.total_cost:,.0f} {currency}",
+                KpiDelta.of(-comparison.cost_savings, currency),
+            ),
+            (
+                "Diesel used",
+                f"{c.fuel_used_l:,.0f} L",
+                KpiDelta.of(-comparison.fuel_savings_l, "L"),
+            ),
+            (
+                "CO2 emitted",
+                f"{c.emissions_kg:,.0f} kg",
+                KpiDelta.of(-comparison.emissions_reduction_kg, "kg"),
+            ),
+            (
+                "Renewable share",
+                f"{c.renewable_fraction:.0%}",
+                KpiDelta.of(
+                    (c.renewable_fraction - b.renewable_fraction) * 100, "pp", lower_is_better=False
+                ),
+            ),
+            (
+                "Generator hours",
+                f"{c.generator_hours:,.0f} h",
+                KpiDelta.of(-comparison.generator_hours_reduction, "h"),
+            ),
+            (
+                "Unmet demand",
+                f"{c.unmet_energy_kwh:,.1f} kWh",
+                KpiDelta.of(comparison.unmet_energy_change_kwh, "kWh", decimals=1),
+            ),
         )
-        cols[1].metric(
-            "Diesel used",
-            f"{c.fuel_used_l:,.0f} L",
-            f"{-comparison.fuel_savings_l:,.0f} L",
-            delta_color="inverse",
-        )
-        cols[2].metric(
-            "CO2 emitted",
-            f"{c.emissions_kg:,.0f} kg",
-            f"{-comparison.emissions_reduction_kg:,.0f} kg",
-            delta_color="inverse",
-        )
-        cols[3].metric(
-            "Renewable share",
-            f"{c.renewable_fraction:.0%}",
-            f"{(c.renewable_fraction - b.renewable_fraction) * 100:+.0f} pp",
-        )
-        cols[4].metric(
-            "Generator hours",
-            f"{c.generator_hours:,.0f} h",
-            f"{-comparison.generator_hours_reduction:,.0f} h",
-            delta_color="inverse",
-        )
-        cols[5].metric(
-            "Unmet demand",
-            f"{c.unmet_energy_kwh:,.1f} kWh",
-            f"{comparison.unmet_energy_change_kwh:+,.1f} kWh",
-            delta_color="inverse",
-        )
+        # Two rows of three keep values readable on narrower screens.
+        for row in (kpis[:3], kpis[3:]):
+            for column, (label, value, delta) in zip(st.columns(len(row)), row, strict=True):
+                column.metric(
+                    label,
+                    value,
+                    delta.text,
+                    delta_color=delta.color,
+                    delta_arrow=delta.arrow,
+                )
         best = self._report.best()
         pct = self._report.comparison(best.strategy_name).cost_savings_pct
         saving = f" - {pct:.1f}% cheaper than the baseline" if pct is not None else ""
@@ -552,7 +584,7 @@ class FleetStudyView:
         cols[0].metric("Sites simulated", f"{len(fleet)}")
         cols[1].metric("Mean cost saving", f"{ref.savings_pct.mean:.1f}%")
         half = ref.savings_pct.ci_half_width
-        cols[2].metric("95% CI half-width", f"+/-{half:.1f} pp" if half is not None else "n/a")
+        cols[2].metric("95% CI half-width", f"±{half:.1f} pp" if half is not None else "n/a")
         cols[3].metric("Optimiser win rate", f"{ref.win_rate:.0%}")
         st.plotly_chart(self._charts.fleet_convergence(report))
         left, right = st.columns(2)
