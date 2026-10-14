@@ -1,0 +1,60 @@
+{
+  "name": "Sample rural macro site (Northern Uganda)",
+  "currency": "USD",
+  "profile": {
+    "days": 30,
+    "start_date": "2026-10-01",
+    "base_load_kw": 2.2,
+    "peak_load_kw": 4.0,
+    "load_noise": 0.05,
+    "solar_mean_clearness": 0.7,
+    "solar_variability": 0.3,
+    "outages_per_day": 1.2,
+    "mean_outage_hours": 3.0,
+    "peak_tariff": 0.24,
+    "offpeak_tariff": 0.12,
+    "peak_start_hour": 18,
+    "peak_end_hour": 23,
+    "seed": 42
+  },
+  "solar": {
+    "rated_kw": 8.0,
+    "om_cost_per_kwh": 0.0
+  },
+  "grid": {
+    "max_import_kw": 15.0,
+    "emission_factor_kg_per_kwh": 0.1
+  },
+  "battery": {
+    "capacity_kwh": 30.0,
+    "initial_soc": 0.8,
+    "min_soc": 0.2,
+    "max_soc": 0.95,
+    "charge_efficiency": 0.95,
+    "discharge_efficiency": 0.95,
+    "max_charge_kw": 10.0,
+    "max_discharge_kw": 10.0,
+    "degradation_cost_per_kwh": 0.02
+  },
+  "generator": {
+    "rated_kw": 10.0,
+    "tank_capacity_l": 150.0,
+    "initial_fuel_l": 150.0,
+    "fuel_price_per_l": 1.45,
+    "min_load_ratio": 0.3,
+    "fuel_curve_slope": 0.246,
+    "fuel_curve_intercept": 0.08415,
+    "maintenance_cost_per_hour": 0.4,
+    "co2_kg_per_litre": 2.68,
+    "refuel_interval_hours": 168
+  },
+  "optimizer": {
+    "reserve_soc": 0.5,
+    "peak_tariff_threshold": 0.2,
+    "grid_charge_tariff_threshold": 0.13,
+    "grid_charge_target_soc": 0.7,
+    "generator_mode": "cycle_charging",
+    "cycle_charge_load_ratio": 0.8,
+    "generator_stop_soc": 0.6
+  }
+}
