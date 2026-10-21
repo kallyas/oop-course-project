@@ -122,6 +122,21 @@ hybrid-power generate-profile --days 30 --output data/my_profile.csv
 hybrid-power --help
 ```
 
+### Jupyter notebook
+
+`notebooks/hybrid_power_study.ipynb` is a self-contained computational study built on the
+library. It sets out the mathematical model, validates the stochastic inputs against theory,
+checks the simulator's energy and SoC invariants at every step, attributes the savings to cost
+components, and runs tornado and sizing-sweep sensitivity analyses. It also runs a paired Monte
+Carlo experiment with bootstrap confidence intervals and a sign test, an ablation of the
+optimiser's rules, and the fleet consistency study.
+
+```bash
+pip install -e ".[notebook]"
+jupyter lab notebooks/hybrid_power_study.ipynb
+HP_NOTEBOOK_FAST=1 jupyter execute notebooks/hybrid_power_study.ipynb   # quick headless run (CI)
+```
+
 ### As a library
 
 ```python
@@ -485,6 +500,7 @@ CLI smoke test whose results are uploaded as an artifact.
 │   └── presentation/          # ChartFactory (Plotly) and Streamlit dashboard
 ├── tests/                     # pytest + Hypothesis + Streamlit AppTest
 ├── data/                      # sample scenario JSON and 30-day profile CSV
+├── notebooks/                 # Jupyter computational study
 ├── streamlit_app.py           # dashboard entry point
 ├── .github/workflows/ci.yml   # continuous integration
 └── pyproject.toml             # packaging and tool configuration
