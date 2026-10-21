@@ -62,7 +62,6 @@ skip_covered = true
 exclude_also = ["if TYPE_CHECKING:", "raise NotImplementedError", "@abstractmethod"]
 
 [tool.mypy]
-python_version = "3.10"
 strict = true
 mypy_path = "src"
 files = ["src", "tests"]
