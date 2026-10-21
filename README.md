@@ -4,12 +4,15 @@
 ![Python](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12%20%7C%203.13-blue)
 ![Typed](https://img.shields.io/badge/mypy-strict-informational)
 ![Coverage](https://img.shields.io/badge/coverage-98%25-brightgreen)
+[![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://oop-course-project.streamlit.app/)
 
 An object-oriented Python **decision-support simulator** that decides, hour by hour, how a
 telecom base station should use **solar PV, the utility grid, battery storage and a diesel
 generator**. It compares an optimised dispatch strategy against a legacy baseline and reports
 operating cost, diesel use, generator hours, CO₂ emissions, renewable share and reliability. An
 interactive Streamlit dashboard presents the results.
+
+**Live demo:** <https://oop-course-project.streamlit.app/>
 
 > **CSC8101 Object-Oriented Programming, Advent 2026.** Tumuhirwe Iden (S26M25/011),
 > Uganda Christian University.
@@ -87,9 +90,16 @@ hybrid-power simulate                                    # or: compare strategie
 
 ### Dashboard
 
+Use the hosted app at <https://oop-course-project.streamlit.app/>, or run it locally:
+
 ```bash
 streamlit run streamlit_app.py      # or: hybrid-power dashboard
 ```
+
+The hosted app runs on Streamlit Community Cloud. It installs the package from
+`requirements.txt`, which points to this project (`.`), so the dependencies are defined only in
+`pyproject.toml`. To deploy your own copy, create an app from this repository with
+`streamlit_app.py` as the main file.
 
 The sidebar controls every input from the proposal: simulation days, site demand, solar availability
 (PV size, sky clearness, cloud variability), grid availability (outage frequency and duration),
@@ -502,6 +512,7 @@ CLI smoke test whose results are uploaded as an artifact.
 ├── data/                      # sample scenario JSON and 30-day profile CSV
 ├── notebooks/                 # Jupyter computational study
 ├── streamlit_app.py           # dashboard entry point
+├── requirements.txt           # Streamlit Cloud install (the package itself)
 ├── .github/workflows/ci.yml   # continuous integration
 └── pyproject.toml             # packaging and tool configuration
 ```
